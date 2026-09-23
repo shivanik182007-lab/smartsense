@@ -193,10 +193,4 @@ SmartSense demonstrates the integration of embedded systems, IoT communication, 
 
 The project aims to provide a simple and centralized interface for monitoring sensor data while also supporting device management and remote firmware updates.
 
-## Hackathon
 
-SmartSense is being developed for the ORION 1.0 Hackathon under the Open Innovation track.
-
-
-
-**Project:** SmartSense
