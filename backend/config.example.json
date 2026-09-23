@@ -1,0 +1,13 @@
+{
+    "ssid": "YOUR_WIFI_NAME",
+    "password": "YOUR_WIFI_PASSWORD",
+    "server": "YOUR_SERVER_IP",
+    "port": "5000",
+    "path": "/sensor",
+    "ip_mode": "dhcp",
+    "static_ip": "",
+    "gateway": "",
+    "subnet": "",
+    "dns": "",
+    "updated": false
+}

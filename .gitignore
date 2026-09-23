@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# SmartSense private configuration
+backend/config.json
+backend/auth_config.json
+backend/secret_key.txt
+
+# SmartSense local database
+backend/sensor_history.db
+
+# Local IDE/editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

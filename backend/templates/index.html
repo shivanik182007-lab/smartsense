@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="ESP32 IR and DHT22 Sensor Monitoring Dashboard"
+    >
+
+    <title>SmartSense</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('style') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<div
+    id="tempAlertBanner"
+    style="display:none; position:fixed; top:16px; right:16px; max-width:360px; z-index:9999; background:#ef5350; color:#fff; padding:12px 16px; border-radius:9px; font-weight:700; font-size:14.5px; box-shadow:0 4px 16px rgba(0,0,0,0.4);"
+></div>
+
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div
+            class="brand-icon"
+            style="display: flex; align-items: center; justify-content: center;"
+        >
+            <svg
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <rect x="6" y="6" width="12" height="12" rx="1.5"></rect>
+                <rect x="9.5" y="9.5" width="5" height="5"></rect>
+                <line x1="9" y1="1.5" x2="9" y2="6"></line>
+                <line x1="15" y1="1.5" x2="15" y2="6"></line>
+                <line x1="9" y1="18" x2="9" y2="22.5"></line>
+                <line x1="15" y1="18" x2="15" y2="22.5"></line>
+                <line x1="18" y1="9" x2="22.5" y2="9"></line>
+                <line x1="18" y1="15" x2="22.5" y2="15"></line>
+                <line x1="1.5" y1="9" x2="6" y2="9"></line>
+                <line x1="1.5" y1="15" x2="6" y2="15"></line>
+            </svg>
+        </div>
+
+        <div class="brand-text">
+
+            <h1>
+                SmartSense
+            </h1>
+
+            <p>
+                IR + DHT22 Dashboard
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="top-actions">
+
+        <button
+            type="button"
+            class="btn secondary"
+            onclick="refreshAll(); return false;"
+        >
+            Refresh
+        </button>
+
+        <button
+            type="button"
+            class="btn secondary"
+            onclick="showPage('network'); return false;"
+        >
+            Settings
+        </button>
+
+        <a
+            href="{{ url_for('logout') }}"
+            class="btn secondary"
+        >
+            Logout
+        </a>
+
+    </div>
+
+</header>
+
+
+
+<div class="status-strip">
+
+    <span
+        id="deviceOnline"
+        class="status-dot offline"
+    ></span>
+
+    <span id="deviceOnlineText">
+        Checking device...
+    </span>
+
+    <span class="status-separator">
+        |
+    </span>
+
+    <span>
+        IP:
+        <strong id="ipAddress">--</strong>
+    </span>
+
+    <span class="status-separator">
+        |
+    </span>
+
+    <span>
+        MAC:
+        <strong id="deviceMac">--</strong>
+    </span>
+
+</div>
+
+
+
+<div class="layout">
+
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <button
+            type="button"
+            class="nav-btn active"
+            data-page="dashboard"
+            onclick="showPage('dashboard'); return false;"
+        >
+            Dashboard
+        </button>
+
+        <button
+            type="button"
+            class="nav-btn"
+            data-page="device"
+            onclick="showPage('device'); return false;"
+        >
+            Device
+        </button>
+
+        <button
+            type="button"
+            class="nav-btn"
+            data-page="sensor"
+            onclick="showPage('sensor'); return false;"
+        >
+            Sensor
+        </button>
+
+        <button
+            type="button"
+            class="nav-btn"
+            data-page="ota"
+            onclick="showPage('ota'); return false;"
+        >
+            OTA Update
+        </button>
+
+        <button
+            type="button"
+            class="nav-btn"
+            data-page="network"
+            onclick="showPage('network'); return false;"
+        >
+            Network Settings
+        </button>
+
+
+        <div class="sidebar-footer">
+
+            <small>
+                ESP32 Web Monitor
+            </small>
+
+            <small id="sidebarVersion">
+                Version: --
+            </small>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- CONTENT -->
+
+    <main class="content">
+
+
+        <!-- DASHBOARD -->
+
+        <section
+            id="page-dashboard"
+            class="page active-page"
+        >
+
+            <div class="page-heading">
+
+                <div>
+
+                    <h2>
+                        Dashboard
+                    </h2>
+
+                    <p>
+                        Live readings and sensor history
+                    </p>
+
+                </div>
+
+
+                <div class="selector-row">
+
+                    <label for="sensorSelect">
+                        Sensor
+                    </label>
+
+                    <select id="sensorSelect">
+
+                        <option value="">
+                            Loading...
+                        </option>
+
+                    </select>
+
+                    <button
+                        type="button"
+                        id="refreshBtn"
+                        class="btn primary"
+                        onclick="refreshDashboard(); return false;"
+                    >
+                        Refresh
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="systemMessage"
+                class="message hidden"
+            ></div>
+
+
+            <div class="cards-grid">
+
+
+                <article class="card">
+
+                    <div class="card-title">
+                        Sensor
+                    </div>
+
+                    <div
+                        id="sensorName"
+                        class="big-value"
+                    >
+                        --
+                    </div>
+
+                    <div
+                        id="sensorId"
+                        class="muted"
+                    >
+                        ID: --
+                    </div>
+
+                    <div class="meta-grid">
+
+                        <div>
+                            <span>Type</span>
+
+                            <strong id="sensorType">
+                                --
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>GPIO</span>
+
+                            <strong id="sensorGPIO">
+                                --
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+
+                <article class="card">
+
+                    <div class="card-title">
+                        Connection
+                    </div>
+
+                    <div
+                        id="deviceConnectionValue"
+                        class="big-value"
+                    >
+                        --
+                    </div>
+
+                    <div class="muted">
+
+                        Last seen:
+                        <span id="lastSeen">
+                            --
+                        </span>
+
+                    </div>
+
+                    <div class="meta-grid">
+
+                        <div>
+
+                            <span>
+                                Data points
+                            </span>
+
+                            <strong id="dataPoints">
+                                0
+                            </strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Device IP
+                            </span>
+
+                            <strong id="cardIpAddress">
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+
+                <article class="card reading-card">
+
+                    <div class="card-title">
+                        Current Reading
+                    </div>
+
+
+                    <!-- IR -->
+
+                    <div
+                        id="irReading"
+                        class="reading-panel hidden"
+                    >
+
+                        <div
+                            id="readingIndicator"
+                            class="reading-indicator"
+                        ></div>
+
+                        <div>
+
+                            <div class="reading-label">
+                                IR Status
+                            </div>
+
+                            <div
+                                id="irStatus"
+                                class="reading-main"
+                            >
+                                --
+                            </div>
+
+                            <div
+                                id="currentReadingDescription"
+                                class="muted"
+                            >
+                                --
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DHT22 -->
+
+                    <div
+                        id="dhtReading"
+                        class="reading-panel hidden"
+                    >
+
+                        <div class="dht-value">
+
+                            <span class="reading-label">
+                                Temperature
+                            </span>
+
+                            <strong id="temperature">
+                                -- °C
+                            </strong>
+
+                        </div>
+
+                        <div class="dht-value">
+
+                            <span class="reading-label">
+                                Humidity
+                            </span>
+
+                            <strong id="humidity">
+                                -- %
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="emptyReading"
+                        class="muted"
+                    >
+                        No reading available.
+                    </div>
+
+                </article>
+
+            </div>
+
+
+
+            <!-- HISTORY -->
+
+            <section class="card history-card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h3>
+                            Sensor History
+                        </h3>
+
+                        <p id="chartDescription">
+                            Historical sensor readings
+                        </p>
+
+                    </div>
+
+
+                    <div class="points-selector">
+
+                        <label for="limitSelect">
+                            Points
+                        </label>
+
+                        <select
+                            id="limitSelect"
+                            onchange="loadHistory();"
+                        >
+
+                            <option value="25">
+                                25
+                            </option>
+
+                            <option
+                                value="50"
+                                selected
+                            >
+                                50
+                            </option>
+
+                            <option value="100">
+                                100
+                            </option>
+
+                            <option value="200">
+                                200
+                            </option>
+
+                        </select>
+
+                        <button
+                            type="button"
+                            id="exportCsvBtn"
+                            class="btn primary"
+                            onclick="exportSensorHistory(); return false;"
+                        >
+                            Export CSV
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chart-wrap">
+
+                    <canvas id="chart"></canvas>
+
+                    <div
+                        id="emptyHistory"
+                        class="empty-state hidden"
+                    >
+                        No history available for this sensor.
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Time
+                                </th>
+
+                                <th>
+                                    Value
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th id="thTemperature">
+                                    Temperature
+                                </th>
+
+                                <th id="thHumidity">
+                                    Humidity
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="historyBody">
+
+                            <tr>
+
+                                <td colspan="5">
+                                    Loading...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+
+        <!-- DEVICE -->
+
+        <section
+            id="page-device"
+            class="page"
+        >
+
+            <div class="page-heading">
+
+                <div>
+
+                    <h2>
+                        Device
+                    </h2>
+
+                    <p>
+                        ESP32 device information
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn primary"
+                    onclick="refreshStatus(); return false;"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div class="cards-grid">
+
+                <article class="card">
+
+                    <div class="card-title">
+                        Device Status
+                    </div>
+
+                    <div
+                        id="deviceStatus"
+                        class="big-value"
+                    >
+                        --
+                    </div>
+
+                    <div
+                        id="deviceStatusMessage"
+                        class="muted"
+                    >
+                        --
+                    </div>
+
+                </article>
+
+
+                <article class="card">
+
+                    <div class="card-title">
+                        Network
+                    </div>
+
+                    <div class="info-list">
+
+                        <div>
+
+                            <span>
+                                IP Address
+                            </span>
+
+                            <strong id="devicePageIp">
+                                --
+                            </strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                MAC Address
+                            </span>
+
+                            <strong id="devicePageMac">
+                                --
+                            </strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                WiFi Status
+                            </span>
+
+                            <strong id="wifiStatus">
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <article class="card">
+
+                    <div class="card-title">
+                        Firmware
+                    </div>
+
+                    <div class="info-list">
+
+                        <div>
+
+                            <span>
+                                Version
+                            </span>
+
+                            <strong id="version">
+                                --
+                            </strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Last Update
+                            </span>
+
+                            <strong id="lastUpdate">
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <section class="card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h3>
+                            Connected Sensors
+                        </h3>
+
+                        <p>
+                            Sensors currently known by the Flask server
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="deviceSensorsList"
+                    class="sensor-list"
+                >
+                    Loading...
+                </div>
+
+            </section>
+
+        </section>
+
+
+
+        <!-- SENSOR -->
+
+        <section
+            id="page-sensor"
+            class="page"
+        >
+
+            <div class="page-heading">
+
+                <div>
+
+                    <h2>
+                        Sensor
+                    </h2>
+
+                    <p>
+                        Connected sensor configuration
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn primary"
+                    onclick="loadSensorConfiguration(); return false;"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <section class="card">
+
+                <div
+                    id="sensorConfigList"
+                    class="sensor-config-list"
+                >
+                    Loading...
+                </div>
+
+            </section>
+
+        </section>
+
+
+
+        <!-- OTA -->
+
+        <section
+            id="page-ota"
+            class="page"
+        >
+
+            <div class="page-heading">
+
+                <div>
+
+                    <h2>
+                        OTA Update
+                    </h2>
+
+                    <p>
+                        Upload new ESP32 firmware
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <section class="card">
+
+                <form
+                    id="otaForm"
+                    action="/upload"
+                    method="POST"
+                    enctype="multipart/form-data"
+                >
+
+                    <label for="firmwareFile">
+                        Firmware file
+                    </label>
+
+                    <input
+                        type="file"
+                        id="firmwareFile"
+                        name="firmware"
+                        accept=".bin"
+                        required
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn primary"
+                    >
+                        Upload Firmware
+                    </button>
+
+                </form>
+
+
+                <div
+                    id="otaMessage"
+                    class="message hidden"
+                ></div>
+
+
+                <div class="progress-wrap">
+
+                    <div class="progress-track">
+
+                        <div
+                            id="otaProgress"
+                            class="progress-bar"
+                            style="width:0%"
+                        >
+                            0%
+                        </div>
+
+                    </div>
+
+                    <p
+                        id="otaStatusText"
+                        class="muted"
+                    >
+                        Ready.
+                    </p>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+
+        <!-- NETWORK -->
+
+        <section
+            id="page-network"
+            class="page"
+        >
+
+            <div class="page-heading">
+
+                <div>
+
+                    <h2>
+                        Network Settings
+                    </h2>
+
+                    <p>
+                        Network information and Flask configuration
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn primary"
+                    onclick="loadNetworkConfiguration(); return false;"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <section class="card">
+
+                <div class="info-list large">
+
+                    <div>
+
+                        <span>
+                            ESP32 IP Address
+                        </span>
+
+                        <strong id="networkIp">
+                            --
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            ESP32 MAC Address
+                        </span>
+
+                        <strong id="networkMac">
+                            --
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            WiFi Status
+                        </span>
+
+                        <strong id="networkWifi">
+                            --
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Flask Server
+                        </span>
+
+                        <strong id="serverAddress">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h3>
+                            Saved Network Configuration
+                        </h3>
+
+                        <p>
+                            Configuration stored by Flask
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="networkConfigList"
+                    class="info-list"
+                >
+                    Loading...
+                </div>
+
+            </section>
+
+
+            <section class="card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h3>
+                            Update Network Configuration
+                        </h3>
+
+                        <p>
+                            Saved to Flask and applied by the ESP32 on its next network check
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="networkForm"
+                    class="network-form"
+                >
+
+                    <div class="form-row">
+
+                        <div class="form-field">
+
+                            <label for="networkMode">
+                                Network Mode
+                            </label>
+
+                            <select
+                                id="networkMode"
+                                onchange="toggleNetworkMode()"
+                            >
+                                <option value="station">
+                                    Station (connect to a router)
+                                </option>
+                                <option value="ap">
+                                    Access Point (ESP32 hosts its own WiFi)
+                                </option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-field">
+
+                            <label
+                                for="networkSsid"
+                                id="networkSsidLabel"
+                            >
+                                Wi-Fi SSID
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkSsid"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="form-field">
+
+                            <label
+                                for="networkPassword"
+                                id="networkPasswordLabel"
+                            >
+                                Wi-Fi Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="networkPassword"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="stationOnlyFields">
+
+                    <div class="form-row">
+
+                        <div class="form-field">
+
+                            <label for="networkIpMode">
+                                IP Mode
+                            </label>
+
+                            <select
+                                id="networkIpMode"
+                                onchange="toggleStaticNetworkFields()"
+                            >
+                                <option value="dhcp">
+                                    Dynamic (DHCP)
+                                </option>
+                                <option value="static">
+                                    Static
+                                </option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="staticNetworkFields"
+                        class="form-row"
+                    >
+
+                        <div class="form-field">
+
+                            <label for="networkStaticIp">
+                                Static IP
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkStaticIp"
+                                placeholder="192.168.1.50"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="form-field">
+
+                            <label for="networkGateway">
+                                Gateway
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkGateway"
+                                placeholder="192.168.1.1"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="form-field">
+
+                            <label for="networkSubnet">
+                                Subnet
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkSubnet"
+                                placeholder="255.255.255.0"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="form-field">
+
+                            <label for="networkDns">
+                                DNS
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkDns"
+                                placeholder="8.8.8.8"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-field">
+
+                            <label for="networkServer">
+                                Flask Server IP
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkServer"
+                                placeholder="10.153.121.191"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="form-field">
+
+                            <label for="networkPort">
+                                Flask Port
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkPort"
+                                placeholder="5000"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <div class="form-field">
+
+                            <label for="networkPath">
+                                Sensor API Path
+                            </label>
+
+                            <input
+                                type="text"
+                                id="networkPath"
+                                placeholder="/sensor"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+                    </div>
+
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="btn primary"
+                        >
+                            Save Network Settings
+                        </button>
+
+                        <span
+                            id="networkFormMessage"
+                            class="form-message"
+                        ></span>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+
+<footer class="footer">
+
+    <span>
+        SmartSense
+    </span>
+
+    <span id="selectedSensorTitle">
+        Sensor: --
+    </span>
+
+</footer>
+
+
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"
+></script>
+
+<script
+    src="{{ url_for('script') }}"
+></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SmartSense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0f14; --panel:#14171e; --border:#262b34;
+    --text:#eae7e2; --muted:#7c818a; --muted2:#565a62;
+    --amber:#f5a623; --red:#ef5350;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: "Sora", "Segoe UI", Arial, sans-serif;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0d0f14; } }
+  :root[data-theme="dark"]{ --bg:#0d0f14; }
+  html{ scroll-padding-top:env(safe-area-inset-top,0px); }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); min-height:100%;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:80px 24px 40px; }
+
+  .eyebrow{
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    font-family:var(--mono); font-size:11.5px; letter-spacing:0.14em;
+    color:var(--muted); text-transform:uppercase;
+    margin-bottom:56px;
+  }
+  .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber);
+        box-shadow:0 0 0 0 rgba(245,166,35,0.5);
+        animation:pulse 2.4s ease-out infinite; }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(245,166,35,0.45); }
+    70%{ box-shadow:0 0 0 8px rgba(245,166,35,0); }
+    100%{ box-shadow:0 0 0 0 rgba(245,166,35,0); }
+  }
+  .eyebrow .accent{ color:var(--amber); }
+
+  .hero{ text-align:center; }
+
+  .wordmark{
+    font-size:clamp(52px, 12vw, 104px);
+    font-weight:800; line-height:0.95; letter-spacing:-0.02em;
+    margin:0;
+    background:linear-gradient(100deg, #eae7e2 0%, #f5a623 55%, #ef5350 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  .tagline{
+    font-family:var(--mono); font-size:12.5px; letter-spacing:0.16em;
+    color:var(--muted); text-transform:uppercase; margin:22px 0 46px;
+  }
+  .tagline span{ color:var(--text); }
+  .tagline .sep{ color:var(--muted2); margin:0 10px; }
+
+  .connect-line{
+    font-size:15px; color:var(--text); margin:0 0 20px;
+  }
+  .connect-line .cursor{
+    display:inline-block; width:8px; height:16px; background:var(--red);
+    margin-left:6px; vertical-align:-2px;
+    animation:blink 1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  .stream{ max-width:420px; margin:0 auto 44px; text-align:left; }
+  .stream-label{
+    display:flex; justify-content:space-between;
+    font-family:var(--mono); font-size:11px; letter-spacing:0.08em;
+    color:var(--muted); text-transform:uppercase; margin-bottom:9px;
+  }
+  #streamPct{ color:var(--amber); }
+  .track{ height:2px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--amber), var(--red));
+    transition:width 2.4s cubic-bezier(.2,.7,.2,1);
+  }
+
+  .cta{
+    display:inline-block; text-decoration:none;
+    background:var(--amber); color:#15171c;
+    font-family:var(--sans); font-weight:800; font-size:15px;
+    padding:14px 30px; border-radius:9px;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .cta:hover{ background:#d68910; transform:translateY(-1px); }
+
+  .statusbar{
+    margin:64px auto 0; max-width:640px;
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    padding:14px 4px;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px 20px;
+    font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:0.05em;
+  }
+  .statusbar .live{ color:var(--amber); }
+
+  .features{
+    max-width:680px; margin:64px auto 0;
+    display:grid; grid-template-columns:1fr 1fr; gap:1px;
+    background:var(--border); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden;
+  }
+  .feature{ background:var(--panel); padding:26px 24px; }
+  .feature h3{
+    margin:0 0 8px; font-size:14.5px; font-weight:700; color:var(--text);
+  }
+  .feature p{
+    margin:0; font-size:13px; line-height:1.55; color:var(--muted);
+  }
+  .feature .mark{ color:var(--amber); }
+
+  footer{
+    text-align:center; margin-top:70px;
+    font-family:var(--mono); font-size:11px; color:var(--muted2);
+    letter-spacing:0.06em;
+  }
+
+  @media (max-width:560px){
+    .features{ grid-template-columns:1fr; }
+    .wrap{ padding:56px 20px 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="eyebrow">
+    <span class="dot"></span>
+    SYSTEM <span class="accent">//</span> SMARTSENSE
+  </div>
+
+  <div class="hero">
+    <h1 class="wordmark">SmartSense</h1>
+
+    <p class="tagline">
+      <span>SENSE</span><span class="sep">·</span><span>MONITOR</span><span class="sep">·</span><span>RESPOND</span>
+    </p>
+
+    <p class="connect-line" id="connectLine">Connecting to ESP32 node<span class="cursor"></span></p>
+
+    <div class="stream">
+      <div class="stream-label">
+        <span>SENSOR STREAM INIT</span>
+        <span id="streamPct">0%</span>
+      </div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+
+    <a class="cta" href="/dashboard">Open Dashboard</a>
+  </div>
+
+  <div class="statusbar">
+    <span>NODE: ESP32&#8209;01</span>
+    <span class="live">READINGS // LIVE</span>
+    <span>STATUS: ONLINE</span>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <h3><span class="mark">•</span> Live Readings</h3>
+      <p>IR and DHT22 data pushed to the dashboard instantly over WebSocket — no waiting on a poll cycle.</p>
+    </div>
+    <div class="feature">
+      <h3><span class="mark">•</span> Temperature Alerts</h3>
+      <p>Crosses a set threshold and every open dashboard gets an instant on-screen alert, wherever you're looking.</p>
+    </div>
+    <div class="feature">
+      <h3><span class="mark">•</span> OTA Updates</h3>
+      <p>Flash new firmware to the ESP32 wirelessly — no USB cable, no walking over to the device.</p>
+    </div>
+    <div class="feature">
+      <h3><span class="mark">•</span> History Export</h3>
+      <p>Download any sensor's full reading history as a CSV, formatted per sensor type.</p>
+    </div>
+  </div>
+
+  <footer>SmartSense &mdash; ESP32 IoT Monitoring</footer>
+
+</div>
+
+<script>
+  window.addEventListener('load', () => {
+    const fill = document.getElementById('fill');
+    const pct = document.getElementById('streamPct');
+    const line = document.getElementById('connectLine');
+
+    requestAnimationFrame(() => { fill.style.width = '100%'; });
+
+    let p = 0;
+    const timer = setInterval(() => {
+      p = Math.min(100, p + Math.ceil(Math.random() * 14));
+      pct.textContent = p + '%';
+      if (p >= 100) {
+        clearInterval(timer);
+        line.innerHTML = 'Connected to ESP32 node';
+      }
+    }, 220);
+  });
+</script>
+
+</body>
+</html>
